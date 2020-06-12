@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+  <mapper namespace="Item">
+  	<select id="selectItemList" parameterType="map" resultType="com.example.vo.ItemVO">
+  		SELECT * FROM
+			(SELECT 
+				ITEMNO, ITEMNAME, ITEMPRICE, ITEMQTY, ITEMDES, ITEMDATE,
+				ROW_NUMBER() OVER (ORDER BY ITEMNO DESC) ROWN 
+			FROM ITEM)
+		WHERE ROWN BETWEEN #{start} AND #{end}
+  	</select>
+  	
+  	<select id="countItem" resultType="int">
+  		SELECT COUNT(*) FROM ITEM
+  	</select>
+  	
+  	<select id="selectOne" parameterType="int" resultType="com.example.vo.ItemVO">
+  		SELECT * FROM ITEM
+		WHERE ITEMNO = #{no}
+  	</select>
+  	
+  	<select id="selectItemSearch" parameterType="String" resultType="com.example.vo.ItemVO">
+  		SELECT * FROM ITEM WHERE ITEMNAME LIKE '%' || #{value} || '%'
+  	</select>
+  	
+  	<select id="selectItemWhere" parameterType="int" resultType="com.example.vo.ItemVO">
+  		SELECT * FROM ITEM WHERE ITEMNO IN(
+  		<foreach collection="array" item="tmp" separator=",">
+			#{tmp}
+		</foreach>
+		)
+  	</select>
+  	
+  	<insert id="insertItem" parameterType="com.example.vo.ItemVO">
+		INSERT INTO BOARD(ITEMNO, ITEMNAME, ITEMPRICE, ITEMQTY, ITEMDES, ITEMDATE)
+		VALUES (SEQ_BOARD_NO.NEXTVAL, #{brd_title}, #{brd_content}, #{brd_img, jdbcType=BLOB}, #{brd_id}, #{brd_hit}, SYSDATE)
+	</insert>
+	
+	<insert id="insertItemBatch" parameterType="java.util.List">
+		INSERT ALL
+			<foreach collection="list" item="obj" separator=" ">
+    		INTO ITEM(ITEMNO, ITEMNAME, ITEMPRICE, ITEMQTY, ITEMDES, ITEMDATE)
+        		VALUES(MY_GET_SEQ_NUMBER, #{obj.itemname}, 
+        			#{obj.itemprice}, #{obj.itemqty}, #{obj.itemdes}, SYSDATE)
+        	</foreach>
+		SELECT * FROM DUAL
+	</insert>
+	
+	<delete id="deleteItemBatch" parameterType="int">
+		DELETE FROM ITEM WHERE ITEMNO IN(
+		<foreach collection="array" item="tmp" separator=",">
+			#{tmp}
+		</foreach>
+		)
+	</delete>
+	
+	<update id="updateItemBatch1" parameterType="java.util.List">
+		
+        <foreach open="UPDATE ITEM SET itemname=(CASE" close="END)," 
+        collection="list" item="obj" separator="">
+            WHEN itemno=#{obj.itemno} THEN #{obj.itemname}
+          </foreach>
+    
+          <foreach open="itemprice=(CASE" close="END)," collection="list" item="obj" separator="">
+           	WHEN itemno=#{obj.itemno} THEN #{obj.itemprice}
+        			</foreach>
+       
+           <foreach open="itemqty=(CASE" close="END)," collection="list" item="obj" separator="">
+           WHEN itemno=#{obj.itemno} THEN #{obj.itemqty}
+        			</foreach>
+       
+       <foreach open="itemdes=(CASE" close="END)" collection="list" item="obj" separator="">
+           WHEN itemno=#{obj.itemno} THEN #{obj.itemdes}
+         </foreach>
+     
+		<foreach open="WHERE itemno IN (" close=")" collection="list" item="obj" separator=",">
+		            #{obj.itemno}
+          </foreach>
+		
+	</update>
+	
+	<update id="updateItemBatch" parameterType="java.util.List">
+      UPDATE ITEM SET
+          ITEMNAME=(
+              CASE 
+              <foreach collection="list" item="obj" separator=" ">
+                  WHEN ITEMNO=#{obj.itemno} THEN #{obj.itemname}
+               </foreach>
+              END
+          ),
+          ITEMPRICE=(
+              CASE 
+              <foreach collection="list" item="obj" separator=" ">
+                  WHEN ITEMNO=#{obj.itemno} THEN #{obj.itemprice}
+              </foreach>
+              END
+          ),
+          ITEMQTY=(
+              CASE 
+              <foreach collection="list" item="obj" separator=" ">
+                  WHEN ITEMNO=#{obj.itemno} THEN #{obj.itemqty}
+              </foreach>
+              END
+          ),
+          ITEMDES=(
+              CASE 
+              <foreach collection="list" item="obj" separator=" ">
+                  WHEN ITEMNO=#{obj.itemno} THEN #{obj.itemdes}
+              </foreach>
+              END
+          )
+      WHERE ITEMNO IN (
+      <foreach collection="list" item="obj" separator=",">
+      #{obj.itemno}
+      </foreach>
+      )
+
+
+   </update>
+  </mapper>
